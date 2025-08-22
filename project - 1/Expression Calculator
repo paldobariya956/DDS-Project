@@ -1,0 +1,113 @@
+import math
+
+# Define operator precedence and associativity
+OPERATORS = {
+    '+': (1, 'L'),
+    '-': (1, 'L'),
+    '*': (2, 'L'),
+    '/': (2, 'L'),
+    '^': (3, 'R')
+}
+
+def is_operator(token):
+    return token in OPERATORS
+
+def precedence(op):
+    return OPERATORS[op][0]
+
+def associativity(op):
+    return OPERATORS[op][1]
+
+def is_number(token):
+    try:
+        float(token)
+        return True
+    except ValueError:
+        return False
+
+# Tokenize expression (e.g., "3 + 4" => ['3', '+', '4'])
+def tokenize(expr):
+    tokens = []
+    number = ''
+    for ch in expr:
+        if ch.isdigit() or ch == '.':
+            number += ch
+        elif ch in OPERATORS or ch in '()':
+            if number:
+                tokens.append(number)
+                number = ''
+            tokens.append(ch)
+        elif ch.isspace():
+            if number:
+                tokens.append(number)
+                number = ''
+    if number:
+        tokens.append(number)
+    return tokens
+
+# Step 1: Infix to Postfix Conversion
+def infix_to_postfix(expr):
+    output = []
+    stack = []
+    tokens = tokenize(expr)
+
+    for token in tokens:
+        if is_number(token):
+            output.append(token)
+        elif is_operator(token):
+            while (stack and stack[-1] != '(' and
+                   (precedence(stack[-1]) > precedence(token) or
+                   (precedence(stack[-1]) == precedence(token) and associativity(token) == 'L'))):
+                output.append(stack.pop())
+            stack.append(token)
+        elif token == '(':
+            stack.append(token)
+        elif token == ')':
+            while stack and stack[-1] != '(':
+                output.append(stack.pop())
+            stack.pop()  # Remove '('
+    
+    while stack:
+        output.append(stack.pop())
+
+    return output
+
+# Step 2: Evaluate Postfix Expression
+def evaluate_postfix(postfix):
+    stack = []
+
+    for token in postfix:
+        if is_number(token):
+            stack.append(float(token))
+        elif is_operator(token):
+            b = stack.pop()
+            a = stack.pop()
+            result = apply_operator(a, b, token)
+            stack.append(result)
+
+    return stack[0]
+
+def apply_operator(a, b, op):
+    if op == '+': return a + b
+    if op == '-': return a - b
+    if op == '*': return a * b
+    if op == '/': return a / b
+    if op == '^': return math.pow(a, b)
+
+# Main calculator function
+def calculate(expression):
+    postfix = infix_to_postfix(expression)
+    result = evaluate_postfix(postfix)
+    return result
+
+# Example usage
+if __name__ == "__main__":
+    while True:
+        expr = input("Enter expression (or 'quit' to exit): ")
+        if expr.lower() == 'quit':
+            break
+        try:
+            result = calculate(expr)
+            print("Result:", result)
+        except Exception as e:
+            print("Error:", e)
