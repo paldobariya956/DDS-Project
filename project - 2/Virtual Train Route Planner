@@ -1,0 +1,94 @@
+class Station:
+    def __init__(self, name):
+        self.name = name
+        self.next = None
+        self.prev = None
+
+class TrainRoute:
+    def __init__(self, circular=False):
+        self.head = None
+        self.tail = None
+        self.current = None
+        self.circular = circular
+
+    def add_station(self, name):
+        new_station = Station(name)
+        if not self.head:
+            self.head = self.tail = self.current = new_station
+        else:
+            self.tail.next = new_station
+            new_station.prev = self.tail
+            self.tail = new_station
+            if self.circular:
+                self.tail.next = self.head
+                self.head.prev = self.tail
+
+    def move_next(self):
+        if not self.current:
+            print("No stations on the route.")
+            return
+        if self.current.next:
+            self.current = self.current.next
+        elif self.circular:
+            self.current = self.head
+        else:
+            print("Reached end of the route.")
+
+    def move_prev(self):
+        if not self.current:
+            print("No stations on the route.")
+            return
+        if self.current.prev:
+            self.current = self.current.prev
+        elif self.circular:
+            self.current = self.tail
+        else:
+            print("Reached start of the route.")
+
+    def get_current_station(self):
+        return self.current.name if self.current else "No station"
+
+    def reset(self):
+        self.current = self.head
+
+    def display_route(self, steps=10):
+        print("Route Preview:")
+        temp = self.current
+        for _ in range(steps):
+            if not temp:
+                break
+            print("->", temp.name, end=" ")
+            temp = temp.next if temp.next != self.current else None
+        print()
+
+# --- Example Usage ---
+if __name__ == "__main__":
+    print("Train Route Planner")
+    circular = input("Is this a circular route? (yes/no): ").strip().lower() == 'yes'
+    route = TrainRoute(circular=circular)
+
+    while True:
+        cmd = input("\nCommands: add [station], next, prev, current, reset, route, quit\n> ").strip().lower()
+        
+        if cmd.startswith("add "):
+            station_name = cmd[4:].strip().title()
+            route.add_station(station_name)
+            print(f"Added station: {station_name}")
+        elif cmd == "next":
+            route.move_next()
+            print("Now at:", route.get_current_station())
+        elif cmd == "prev":
+            route.move_prev()
+            print("Now at:", route.get_current_station())
+        elif cmd == "current":
+            print("Current station:", route.get_current_station())
+        elif cmd == "reset":
+            route.reset()
+            print("Reset to start of route.")
+        elif cmd == "route":
+            route.display_route()
+        elif cmd == "quit":
+            print("Exiting planner.")
+            break
+        else:
+            print("Unknown command.")
